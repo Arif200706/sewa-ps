@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard User - Rental PS</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="dashboard-body">
+
+  <div class="navbar">
+    <h2>Rental<span>PS</span> — Dashboard User</h2>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+
+  <h3 style="margin-bottom:14px;">Pilih PS untuk disewa</h3>
+  <div class="card-grid" id="jenisPsGrid"></div>
+
+  <h3 style="margin:24px 0 14px;">Form Sewa PS</h3>
+  <div class="ps-card" style="max-width:460px; text-align:left;">
+    <div class="input-group">
+      <label>Jam Mulai</label>
+      <input type="datetime-local" id="jamMulai" style="width:100%; padding:10px; border-radius:8px;">
+    </div>
+    <div class="input-group">
+      <label>Lama Sewa (jam)</label>
+      <input type="number" id="lamaSewa" min="1" value="1" style="width:100%; padding:10px; border-radius:8px;">
+    </div>
+    <div class="input-group">
+      <label>Pilih Unit</label>
+      <select id="unitSelect" style="width:100%; padding:10px; border-radius:8px;"></select>
+      <small id="unitHint" style="display:block; margin-top:6px; color:#9aa3b8;">
+        Isi jam mulai &amp; durasi dulu supaya sistem menampilkan status ketersediaan tiap unit.
+      </small>
+    </div>
+
+    <div id="jadwalUnitBox" style="margin:14px 0; display:none;">
+      <label style="font-size:13px; color:#c7cee0;">Jadwal yang sudah terpakai untuk unit ini:</label>
+      <div id="jadwalUnitList" style="margin-top:8px; font-size:12px;"></div>
+    </div>
+
+    <p id="sewaMsg" style="font-size:13px; margin-bottom:10px;"></p>
+    <button class="btn-login" onclick="buatSewa()"><span>SEWA SEKARANG</span></button>
+  </div>
+
+  <h3 style="margin:26px 0 14px;">Riwayat Sewa Saya</h3>
+  <table>
+    <thead>
+      <tr><th>Jenis</th><th>Unit</th><th>Jam Mulai</th><th>Durasi</th><th>Total</th><th>Status Sewa</th><th>Pembayaran</th><th>Aksi</th></tr>
+    </thead>
+    <tbody id="riwayatBody"></tbody>
+  </table>
+</div>
+
+<!-- Modal Pembayaran QRIS (QRIS statis milik pemilik rental) -->
+<div id="qrisModal" class="modal-overlay" style="display:none;">
+  <div class="modal-box">
+    <h3 style="color:var(--neon-blue); margin-bottom:6px;">Bayar dengan QRIS</h3>
+    <p style="font-size:13px; color:#9aa3b8; margin-bottom:16px;">
+      Scan kode di bawah ini pakai aplikasi e-wallet / m-banking mana saja yang mendukung QRIS,
+      lalu transfer sesuai nominal. Admin akan mengecek &amp; mengonfirmasi pembayaranmu.
+    </p>
+
+    <div id="qrisLoading" style="text-align:center; padding:20px 0;">Menyiapkan pembayaran...</div>
+
+    <div id="qrisContent" style="display:none; text-align:center;">
+      <img id="qrisImage" src="img/qris.jpg" alt="QRIS Code" style="width:220px; height:220px; background:#fff; border-radius:12px; padding:10px; object-fit:contain;">
+      <p style="margin-top:12px; font-size:20px; font-weight:800; color:var(--neon-green);" id="qrisTotal"></p>
+      <p id="qrisStatusText" style="font-size:13px; color:#ffd75e; margin-top:6px;">⏳ Menunggu konfirmasi admin...</p>
+      <p style="font-size:11px; color:#7c869c; margin-top:10px;">
+        Halaman ini akan otomatis diperbarui begitu admin/superadmin mengonfirmasi pembayaranmu.
+      </p>
+    </div>
+
+    <button class="btn-logout" style="width:100%; margin-top:16px;" onclick="tutupModalQris()">Tutup</button>
+  </div>
+</div>
+
+<script src="js/script.js"></script>
+<script>
+  const user = cekLogin(['user']);
+
+  async function muatJenisPS() {
+    const data = await apiFetch('/jenis-ps');
+    const grid = document.getElementById('jenisPsGrid');
+    grid.innerHTML = data.map(ps => `
+      <div class="ps-card">
+        <h3>${ps.nama_ps}</h3>
+        <div class="harga">Rp ${ps.harga_per_jam.toLocaleString('id-ID')}/jam</div>
+        <p style="font-size:12px; color:#9aa3b8;">${ps.deskripsi}</p>
+      </div>
+    `).join('');
+  }
+
+  // Memuat daftar unit. Jika jam mulai & durasi sudah diisi, backend akan
+  // menandai tiap unit apakah bentrok jadwal (tersedia_di_jam_ini: true/false).
+  async function muatUnitTersedia() {
+    const jamMulai = document.getElementById('jamMulai').value;
+    const lamaSewa = document.getElementById('lamaSewa').value;
+    const hint = document.getElementById('unitHint');
+
+    let endpoint = '/unit-tersedia';
+    if (jamMulai && lamaSewa) {
+      endpoint += `?jam_mulai=${encodeURIComponent(jamMulai)}&lama_sewa_jam=${encodeURIComponent(lamaSewa)}`;
+    }
+
+    const data = await apiFetch(endpoint);
+    const select = document.getElementById('unitSelect');
+
+    if (data.length === 0) {
+      select.innerHTML = '<option value="">Tidak ada unit tersedia</option>';
+      hint.textContent = '';
+      return;
+    }
+
+    select.innerHTML = data.map(u => {
+      const bentrok = u.tersedia_di_jam_ini === false;
+      const label = bentrok
+        ? `${u.kode_unit} - ${u.nama_ps} — ❌ SUDAH DISEWA di jam ini`
+        : `${u.kode_unit} - ${u.nama_ps} (Rp${u.harga_per_jam.toLocaleString('id-ID')}/jam)`;
+      return `<option value="${u.id}" ${bentrok ? 'disabled' : ''}>${label}</option>`;
+    }).join('');
+
+    hint.textContent = (jamMulai && lamaSewa)
+      ? 'Unit yang ditandai ❌ sudah ada yang menyewa pada rentang jam tersebut dan tidak bisa dipilih.'
+      : 'Isi jam mulai & durasi dulu supaya sistem menampilkan status ketersediaan tiap unit.';
+
+    muatJadwalUnit();
+  }
+
+  // Menampilkan jam-jam yang sudah dibooking untuk unit yang sedang dipilih,
+  // supaya user tahu jam mana yang harus dihindari.
+  async function muatJadwalUnit() {
+    const unitId = document.getElementById('unitSelect').value;
+    const box = document.getElementById('jadwalUnitBox');
+    const list = document.getElementById('jadwalUnitList');
+
+    if (!unitId) { box.style.display = 'none'; return; }
+
+    const jadwal = await apiFetch(`/unit/${unitId}/jadwal`);
+
+    if (!Array.isArray(jadwal) || jadwal.length === 0) {
+      box.style.display = 'block';
+      list.innerHTML = '<span style="color:#38ffb0;">Belum ada jadwal terpakai untuk unit ini.</span>';
+      return;
+    }
+
+    box.style.display = 'block';
+    list.innerHTML = jadwal.map(j => `
+      <div style="padding:6px 10px; margin-bottom:6px; background:rgba(255,255,255,0.05); border-radius:8px; display:flex; justify-content:space-between;">
+        <span>${new Date(j.jam_mulai).toLocaleString('id-ID')} — ${new Date(j.jam_selesai).toLocaleString('id-ID')}</span>
+        <span class="badge ${j.status}">${j.status}</span>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('jamMulai').addEventListener('change', muatUnitTersedia);
+  document.getElementById('lamaSewa').addEventListener('change', muatUnitTersedia);
+  document.getElementById('unitSelect').addEventListener('change', muatJadwalUnit);
+
+  async function muatRiwayat() {
+    const data = await apiFetch('/riwayat-saya');
+    const body = document.getElementById('riwayatBody');
+    body.innerHTML = data.map(r => `
+      <tr>
+        <td>${r.nama_ps}</td>
+        <td>${r.kode_unit}</td>
+        <td>${new Date(r.jam_mulai).toLocaleString('id-ID')}</td>
+        <td>${r.lama_sewa_jam} jam</td>
+        <td>Rp ${r.total_harga.toLocaleString('id-ID')}</td>
+        <td><span class="badge ${r.status}">${r.status}</span></td>
+        <td><span class="badge ${badgePembayaran(r.status_pembayaran)}">${labelPembayaran(r.status_pembayaran)}</span></td>
+        <td>
+          ${r.status !== 'dibatalkan' && r.status_pembayaran !== 'lunas'
+            ? `<button class="btn-login" style="padding:6px 12px; font-size:11px;" onclick="bayarQris(${r.id})">Bayar QRIS</button>`
+            : '—'}
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="8">Belum ada riwayat sewa.</td></tr>';
+  }
+
+  function badgePembayaran(status) {
+    if (status === 'lunas') return 'selesai';
+    if (status === 'menunggu_pembayaran') return 'menunggu';
+    if (status === 'gagal') return 'dibatalkan';
+    return 'menunggu';
+  }
+  function labelPembayaran(status) {
+    const map = { belum_bayar: 'Belum Bayar', menunggu_pembayaran: 'Menunggu Konfirmasi', lunas: 'Lunas', gagal: 'Gagal' };
+    return map[status] || 'Belum Bayar';
+  }
+
+  async function buatSewa() {
+    const msg = document.getElementById('sewaMsg');
+    const unit_ps_id = document.getElementById('unitSelect').value;
+    const jam_mulai = document.getElementById('jamMulai').value;
+    const lama_sewa_jam = document.getElementById('lamaSewa').value;
+
+    if (!unit_ps_id || !jam_mulai || !lama_sewa_jam) {
+      msg.style.color = '#ff2e9f';
+      msg.textContent = 'Lengkapi semua data sewa terlebih dahulu (jam mulai, durasi, dan unit).';
+      return;
+    }
+
+    msg.style.color = '#9aa3b8';
+    msg.textContent = 'Memproses pesanan...';
+
+    // Backend tetap menjadi sumber kebenaran akhir (double-check bentrok jadwal),
+    // meskipun frontend sudah menonaktifkan unit yang bentrok di dropdown.
+    const data = await apiFetch('/sewa', {
+      method: 'POST',
+      body: JSON.stringify({ unit_ps_id, jam_mulai, lama_sewa_jam })
+    });
+
+    if (data.total_harga) {
+      msg.style.color = '#38ffb0';
+      msg.textContent = `Berhasil! Total: Rp ${data.total_harga.toLocaleString('id-ID')}. Menunggu konfirmasi admin.`;
+      muatUnitTersedia();
+      muatRiwayat();
+    } else {
+      // Jika 409 (bentrok jadwal), backend sudah mengirim pesan jam yang bentrok
+      msg.style.color = '#ff2e9f';
+      msg.textContent = data.message || 'Gagal membuat sewa. Unit ini mungkin sudah disewa orang lain di jam yang sama.';
+      muatUnitTersedia(); // refresh supaya status unit ter-update
+    }
+  }
+
+  // =========================================================
+  // PEMBAYARAN QRIS
+  // =========================================================
+  let pollingInterval = null;
+
+  async function bayarQris(transaksi_id) {
+    document.getElementById('qrisModal').style.display = 'flex';
+    document.getElementById('qrisLoading').style.display = 'block';
+    document.getElementById('qrisContent').style.display = 'none';
+
+    // Menandai transaksi jadi "menunggu_pembayaran" di server. Gambar QRIS
+    // yang ditampilkan selalu sama (statis, img/qris.jpg) untuk semua user.
+    const data = await apiFetch('/pembayaran/qris', {
+      method: 'POST',
+      body: JSON.stringify({ transaksi_id })
+    });
+
+    document.getElementById('qrisLoading').style.display = 'none';
+
+    if (!data.total_harga) {
+      document.getElementById('qrisContent').style.display = 'block';
+      document.getElementById('qrisStatusText').style.color = '#ff2e9f';
+      document.getElementById('qrisStatusText').textContent = data.message || 'Gagal memproses pembayaran.';
+      return;
+    }
+
+    document.getElementById('qrisContent').style.display = 'block';
+    document.getElementById('qrisTotal').textContent = `Rp ${data.total_harga.toLocaleString('id-ID')}`;
+    document.getElementById('qrisStatusText').style.color = '#ffd75e';
+    document.getElementById('qrisStatusText').textContent = '⏳ Menunggu konfirmasi admin...';
+
+    // Polling status pembayaran tiap 4 detik, sampai admin konfirmasi
+    // lunas/gagal lewat dashboard mereka, atau sampai modal ditutup.
+    clearInterval(pollingInterval);
+    pollingInterval = setInterval(async () => {
+      const cek = await apiFetch(`/pembayaran/status/${transaksi_id}`);
+      if (cek.status_pembayaran === 'lunas') {
+        document.getElementById('qrisStatusText').style.color = '#38ffb0';
+        document.getElementById('qrisStatusText').textContent = '✅ Pembayaran dikonfirmasi admin! Terima kasih.';
+        clearInterval(pollingInterval);
+        muatRiwayat();
+        setTimeout(tutupModalQris, 2000);
+      } else if (cek.status_pembayaran === 'gagal') {
+        document.getElementById('qrisStatusText').style.color = '#ff2e9f';
+        document.getElementById('qrisStatusText').textContent = '❌ Pembayaran ditolak/gagal. Silakan hubungi admin.';
+        clearInterval(pollingInterval);
+        muatRiwayat();
+      }
+    }, 4000);
+  }
+
+  function tutupModalQris() {
+    document.getElementById('qrisModal').style.display = 'none';
+    clearInterval(pollingInterval);
+  }
+
+  muatJenisPS();
+  muatUnitTersedia();
+  muatRiwayat();
+</script>
+</body>
+</html>

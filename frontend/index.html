@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Rental PS3 PS4 PS5</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Partikel cahaya melayang -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Efek garis scan ala PS5 -->
+  <div class="scanline"></div>
+
+  <div class="login-wrapper">
+
+    <div class="login-card">
+
+      <div class="logo-area">
+        <div class="ps-logo-shapes">
+          <span class="shape triangle"></span>
+          <span class="shape circle"></span>
+          <span class="shape cross"></span>
+          <span class="shape square"></span>
+        </div>
+        <h1 class="brand-title">RENTAL<span>PS</span></h1>
+        <p class="brand-sub">PS3 &bull; PS4 &bull; PS5 — Sewa Sepuasnya!</p>
+      </div>
+
+      <form id="loginForm" class="login-form">
+        <div class="input-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" placeholder="Masukkan username" required autocomplete="username">
+        </div>
+
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Masukkan password" required autocomplete="current-password">
+        </div>
+
+        <p id="errorMsg" class="error-msg"></p>
+
+        <button type="submit" class="btn-login">
+          <span>MASUK</span>
+        </button>
+      </form>
+
+      <p class="register-link">Belum punya akun? <a href="register.html">Daftar di sini</a></p>
+
+      <div class="demo-accounts">
+        <p>Demo akun (setelah seed database):</p>
+        <code>superadmin / super123</code>
+        <code>admin / admin123</code>
+        <code>user / user123</code>
+      </div>
+    </div>
+
+    <!-- Ilustrasi controller PS5 melayang -->
+    <div class="controller-art">
+      <svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" class="ps5-controller">
+        <defs>
+          <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f2f4f8"/>
+            <stop offset="100%" stop-color="#c9ced9"/>
+          </linearGradient>
+        </defs>
+        <path d="M60,120 C40,60 120,40 200,45 C280,40 360,60 340,120 C360,160 330,210 280,205 C260,203 250,180 200,180 C150,180 140,203 120,205 C70,210 40,160 60,120 Z"
+              fill="url(#bodyGrad)" stroke="#8890a0" stroke-width="2"/>
+        <circle cx="130" cy="110" r="26" fill="#1c1e26"/>
+        <circle cx="270" cy="110" r="26" fill="#1c1e26"/>
+        <g class="glow-buttons">
+          <circle cx="300" cy="80" r="7" fill="#6ec6ff"/>
+          <circle cx="320" cy="100" r="7" fill="#ff6ec7"/>
+          <circle cx="300" cy="120" r="7" fill="#ff5b5b"/>
+          <circle cx="280" cy="100" r="7" fill="#7dffb3"/>
+        </g>
+        <rect x="185" y="95" width="30" height="30" rx="6" fill="#0d0e12"/>
+        <rect x="60" y="70" width="10" height="4" fill="#3a3f4b"/>
+        <rect x="330" y="70" width="10" height="4" fill="#3a3f4b"/>
+      </svg>
+    </div>
+
+  </div>
+
+  <script src="js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,429 @@
+/* =========================================================
+   TEMA PS5 - Rental PS3/PS4/PS5
+   Palet warna: hitam, putih, biru neon, pink neon (khas PS5)
+   ========================================================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', 'Poppins', Arial, sans-serif;
+}
+
+:root {
+  --bg-dark: #05060a;
+  --neon-blue: #00c8ff;
+  --neon-pink: #ff2e9f;
+  --neon-green: #38ffb0;
+  --white: #f4f6fb;
+  --card-bg: rgba(15, 17, 26, 0.75);
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, #101425 0%, #05060a 60%);
+  overflow-x: hidden;
+  color: var(--white);
+  position: relative;
+}
+
+/* ---------- Background animasi gradient bergerak ---------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(120deg, #0a0d1a, #0d1730, #1a0d2b, #0a0d1a);
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease infinite;
+  z-index: -3;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ---------- Partikel cahaya melayang ---------- */
+.particles {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particles span {
+  position: absolute;
+  bottom: -20px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-blue);
+  box-shadow: 0 0 10px 2px var(--neon-blue);
+  animation: floatUp linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.8; }
+  100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
+}
+
+/* ---------- Efek scanline khas layar konsol ---------- */
+.scanline {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.02),
+    rgba(255,255,255,0.02) 2px,
+    transparent 3px,
+    transparent 4px
+  );
+  pointer-events: none;
+}
+
+/* ---------- Layout login ---------- */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 60px;
+  padding: 40px 20px;
+  flex-wrap: wrap;
+}
+
+.login-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 0 40px rgba(0, 200, 255, 0.15), 0 0 80px rgba(255, 46, 159, 0.08);
+  animation: cardEntrance 0.8s ease;
+  position: relative;
+}
+
+@keyframes cardEntrance {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.logo-area {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.ps-logo-shapes {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.ps-logo-shapes .shape {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.ps-logo-shapes .triangle {
+  width: 0; height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 16px solid var(--neon-green);
+  filter: drop-shadow(0 0 6px var(--neon-green));
+  animation-delay: 0s;
+}
+.ps-logo-shapes .circle {
+  border-radius: 50%;
+  background: var(--neon-pink);
+  box-shadow: 0 0 8px var(--neon-pink);
+  animation-delay: 0.2s;
+}
+.ps-logo-shapes .cross {
+  background: transparent;
+  position: relative;
+  animation-delay: 0.4s;
+}
+.ps-logo-shapes .cross::before, .ps-logo-shapes .cross::after {
+  content:"";
+  position: absolute;
+  background: var(--neon-blue);
+  box-shadow: 0 0 6px var(--neon-blue);
+}
+.ps-logo-shapes .cross::before { width: 18px; height: 3px; top: 8px; }
+.ps-logo-shapes .cross::after { width: 3px; height: 18px; left: 8px; }
+.ps-logo-shapes .square {
+  background: #ffd75e;
+  box-shadow: 0 0 8px #ffd75e;
+  animation-delay: 0.6s;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.brand-title {
+  font-size: 30px;
+  letter-spacing: 3px;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--white), var(--neon-blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-title span {
+  background: linear-gradient(90deg, var(--neon-pink), var(--neon-blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: #9aa3b8;
+  margin-top: 6px;
+  letter-spacing: 1px;
+}
+
+/* ---------- Form ---------- */
+.input-group {
+  margin-bottom: 18px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #c7cee0;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: var(--white);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.input-group input:focus {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 12px rgba(0, 200, 255, 0.4);
+  background: rgba(255,255,255,0.08);
+}
+
+.error-msg {
+  color: var(--neon-pink);
+  font-size: 13px;
+  min-height: 16px;
+  margin-bottom: 8px;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 14px;
+  color: #05060a;
+  background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+  background-size: 200% auto;
+  transition: background-position 0.4s ease, transform 0.15s ease;
+  box-shadow: 0 0 20px rgba(0, 200, 255, 0.4);
+}
+
+.btn-login:hover {
+  background-position: right center;
+  transform: translateY(-2px);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.register-link {
+  text-align: center;
+  font-size: 13px;
+  margin-top: 18px;
+  color: #9aa3b8;
+}
+
+.register-link a {
+  color: var(--neon-blue);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.demo-accounts {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(255,255,255,0.15);
+  font-size: 11px;
+  color: #7c869c;
+  text-align: center;
+}
+
+.demo-accounts code {
+  display: inline-block;
+  margin: 3px 4px;
+  background: rgba(255,255,255,0.06);
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--neon-green);
+}
+
+/* ---------- Ilustrasi controller ---------- */
+.controller-art {
+  max-width: 420px;
+  width: 100%;
+  animation: floatController 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 40px rgba(0, 200, 255, 0.35));
+}
+
+@keyframes floatController {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-18px) rotate(2deg); }
+}
+
+.glow-buttons circle {
+  animation: pulseGlow 1.6s ease-in-out infinite;
+}
+.glow-buttons circle:nth-child(2) { animation-delay: 0.2s; }
+.glow-buttons circle:nth-child(3) { animation-delay: 0.4s; }
+.glow-buttons circle:nth-child(4) { animation-delay: 0.6s; }
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; filter: drop-shadow(0 0 6px currentColor); }
+}
+
+@media (max-width: 860px) {
+  .controller-art { display: none; }
+}
+
+/* =========================================================
+   DASHBOARD STYLES (dipakai di dashboard-user/admin/superadmin)
+   ========================================================= */
+.dashboard-body {
+  padding: 30px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--card-bg);
+  border-radius: 14px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.navbar h2 span { color: var(--neon-blue); }
+
+.btn-logout {
+  background: transparent;
+  border: 1px solid var(--neon-pink);
+  color: var(--neon-pink);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+.btn-logout:hover { background: var(--neon-pink); color: #05060a; }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.ps-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ps-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 30px rgba(0,200,255,0.2);
+}
+
+.ps-card h3 { color: var(--neon-blue); margin-bottom: 6px; }
+.ps-card .harga { font-size: 22px; font-weight: 800; color: var(--neon-green); margin: 8px 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 13px;
+}
+
+th { background: rgba(255,255,255,0.06); color: var(--neon-blue); }
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.badge.menunggu { background: #4d3b00; color: #ffd75e; }
+.badge.berlangsung { background: #003b4d; color: var(--neon-blue); }
+.badge.selesai { background: #003d24; color: var(--neon-green); }
+.badge.dibatalkan { background: #4d0018; color: var(--neon-pink); }
+
+/* ---------- Modal Pembayaran QRIS ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-box {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
+  padding: 28px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 0 40px rgba(0,200,255,0.25);
+  animation: cardEntrance 0.3s ease;
+}

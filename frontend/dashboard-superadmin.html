@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Superadmin - Rental PS</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="dashboard-body">
+
+  <div class="navbar">
+    <h2>Rental<span>PS</span> — Dashboard Superadmin</h2>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+
+  <h3 style="margin-bottom:14px;">Manajemen Semua Transaksi</h3>
+  <table style="margin-bottom:30px;">
+    <thead>
+      <tr>
+        <th>ID</th><th>Pelanggan</th><th>Jenis</th><th>Unit</th>
+        <th>Jam Mulai</th><th>Jam Selesai</th><th>Durasi</th><th>Total</th><th>Status Sewa</th><th>Pembayaran</th><th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody id="transaksiBody"></tbody>
+  </table>
+
+  <h3 style="margin-bottom:14px;">Manajemen User &amp; Role</h3>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Nama</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Aksi</th></tr>
+    </thead>
+    <tbody id="userBody"></tbody>
+  </table>
+</div>
+
+<script src="js/script.js"></script>
+<script>
+  const user = cekLogin(['superadmin']);
+
+  function labelPembayaran(status) {
+    const map = { belum_bayar: 'Belum Bayar', menunggu_pembayaran: 'Menunggu Konfirmasi', lunas: 'Lunas', gagal: 'Gagal' };
+    return map[status] || 'Belum Bayar';
+  }
+  function badgePembayaran(status) {
+    if (status === 'lunas') return 'selesai';
+    if (status === 'menunggu_pembayaran') return 'menunggu';
+    if (status === 'gagal') return 'dibatalkan';
+    return 'menunggu';
+  }
+
+  function hitungJamSelesai(jamMulai, lamaJam) {
+    const mulai = new Date(jamMulai);
+    const selesai = new Date(mulai.getTime() + lamaJam * 60 * 60 * 1000);
+    return selesai.toLocaleString('id-ID');
+  }
+
+  async function muatTransaksi() {
+    const data = await apiFetch('/transaksi');
+    const body = document.getElementById('transaksiBody');
+    body.innerHTML = data.map(t => `
+      <tr>
+        <td>#${t.id}</td>
+        <td>${t.nama_lengkap}</td>
+        <td>${t.nama_ps}</td>
+        <td>${t.kode_unit}</td>
+        <td>${new Date(t.jam_mulai).toLocaleString('id-ID')}</td>
+        <td>${hitungJamSelesai(t.jam_mulai, t.lama_sewa_jam)}</td>
+        <td>${t.lama_sewa_jam} jam</td>
+        <td>Rp ${t.total_harga.toLocaleString('id-ID')}</td>
+        <td><span class="badge ${t.status}">${t.status}</span></td>
+        <td><span class="badge ${badgePembayaran(t.status_pembayaran)}">${labelPembayaran(t.status_pembayaran)}</span></td>
+        <td>
+          <select onchange="ubahStatus(${t.id}, this.value)" style="padding:6px; border-radius:6px;">
+            <option value="">Ubah status...</option>
+            <option value="berlangsung">Berlangsung</option>
+            <option value="selesai">Selesai</option>
+            <option value="dibatalkan">Dibatalkan</option>
+          </select>
+          ${t.status_pembayaran !== 'lunas' ? `
+            <div style="margin-top:6px; display:flex; gap:6px;">
+              <button class="btn-login" style="padding:5px 10px; font-size:11px;" onclick="konfirmasiBayar(${t.id})">✅ Konfirmasi Bayar</button>
+              <button class="btn-logout" style="padding:5px 10px; font-size:11px;" onclick="tolakBayar(${t.id})">❌ Tolak</button>
+            </div>
+          ` : ''}
+        </td>
+      </tr>
+    `).join('') || '<tr><td colspan="11">Belum ada transaksi.</td></tr>';
+  }
+
+  // Konfirmasi manual: dipakai kalau admin/superadmin sudah mengecek sendiri
+  // pelanggan sudah bayar (misalnya cek mutasi/bukti transfer, atau tunai).
+  async function konfirmasiBayar(id) {
+    if (!confirm(`Konfirmasi bahwa transaksi #${id} SUDAH DIBAYAR oleh pelanggan?`)) return;
+    const data = await apiFetch(`/pembayaran/${id}/konfirmasi`, { method: 'PUT' });
+    alert(data.message);
+    muatTransaksi();
+  }
+
+  async function tolakBayar(id) {
+    if (!confirm(`Tandai pembayaran transaksi #${id} sebagai GAGAL/ditolak?`)) return;
+    const data = await apiFetch(`/pembayaran/${id}/tolak`, { method: 'PUT' });
+    alert(data.message);
+    muatTransaksi();
+  }
+
+  async function muatUser() {
+    const data = await apiFetch('/users');
+    const body = document.getElementById('userBody');
+    body.innerHTML = data.map(u => `
+      <tr>
+        <td>#${u.id}</td>
+        <td>${u.nama_lengkap}</td>
+        <td>${u.username}</td>
+        <td>${u.email}</td>
+        <td>
+          <select onchange="ubahRole(${u.id}, this.value)" style="padding:6px; border-radius:6px;">
+            <option value="user" ${u.nama_role==='user'?'selected':''}>user</option>
+            <option value="admin" ${u.nama_role==='admin'?'selected':''}>admin</option>
+            <option value="superadmin" ${u.nama_role==='superadmin'?'selected':''}>superadmin</option>
+          </select>
+        </td>
+        <td>
+          <select onchange="ubahStatusUser(${u.id}, this.value)" style="padding:6px; border-radius:6px;">
+            <option value="aktif" ${u.status==='aktif'?'selected':''}>aktif</option>
+            <option value="nonaktif" ${u.status==='nonaktif'?'selected':''}>nonaktif</option>
+          </select>
+        </td>
+        <td>—</td>
+      </tr>
+    `).join('') || '<tr><td colspan="7">Belum ada user.</td></tr>';
+  }
+
+  async function ubahStatus(id, status) {
+    if (!status) return;
+    const data = await apiFetch(`/transaksi/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+    alert(data.message);
+    muatTransaksi();
+  }
+
+  async function ubahRole(id, role) {
+    const data = await apiFetch(`/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
+    alert(data.message);
+    muatUser();
+  }
+
+  async function ubahStatusUser(id, status) {
+    const data = await apiFetch(`/users/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) });
+    alert(data.message);
+    muatUser();
+  }
+
+  muatTransaksi();
+  muatUser();
+</script>
+</body>
+</html>

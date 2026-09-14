@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daftar Akun - Rental PS</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  <div class="scanline"></div>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="logo-area">
+        <h1 class="brand-title">DAFTAR<span>AKUN</span></h1>
+        <p class="brand-sub">Buat akun untuk mulai menyewa PS3, PS4, PS5</p>
+      </div>
+
+      <form id="registerForm" class="login-form">
+        <div class="input-group">
+          <label for="nama_lengkap">Nama Lengkap</label>
+          <input type="text" id="nama_lengkap" required>
+        </div>
+        <div class="input-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" required>
+        </div>
+        <div class="input-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required>
+        </div>
+        <div class="input-group">
+          <label for="no_telp">No. Telepon</label>
+          <input type="text" id="no_telp">
+        </div>
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" required>
+        </div>
+
+        <p id="msg" class="error-msg"></p>
+
+        <button type="submit" class="btn-login"><span>DAFTAR</span></button>
+      </form>
+
+      <p class="register-link">Sudah punya akun? <a href="index.html">Login di sini</a></p>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('msg');
+      msg.style.color = '#ff2e9f';
+      msg.textContent = '';
+
+      const payload = {
+        nama_lengkap: document.getElementById('nama_lengkap').value,
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        no_telp: document.getElementById('no_telp').value,
+        password: document.getElementById('password').value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.textContent = data.message || 'Registrasi gagal.';
+          return;
+        }
+
+        msg.style.color = '#38ffb0';
+        msg.textContent = 'Registrasi berhasil! Mengarahkan ke halaman login...';
+        setTimeout(() => window.location.href = 'index.html', 1500);
+      } catch (err) {
+        msg.textContent = 'Tidak dapat terhubung ke server.';
+      }
+    });
+  </script>
+</body>
+</html>
